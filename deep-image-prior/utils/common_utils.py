@@ -1,3 +1,4 @@
+from tqdm import tqdm
 import torch
 import torch.nn as nn
 import torchvision
@@ -59,7 +60,7 @@ def get_image_grid(images_np, nrow=8):
     
     return torch_grid.numpy()
 
-def plot_image_grid(images_np, nrow =8, factor=1, interpolation='lanczos'):
+def plot_image_grid(images_np, nrow =8, factor=1, interpolation='lanczos', file_name = './output/default.jpg'):
     """Draws images in a grid
     
     Args:
@@ -79,10 +80,13 @@ def plot_image_grid(images_np, nrow =8, factor=1, interpolation='lanczos'):
     
     if images_np[0].shape[0] == 1:
         plt.imshow(grid[0], cmap='gray', interpolation=interpolation)
+        pass
     else:
         plt.imshow(grid.transpose(1, 2, 0), interpolation=interpolation)
+        pass
     
-    plt.show()
+    # plt.show()
+    plt.savefig(file_name)
     
     return grid
 
@@ -224,7 +228,7 @@ def optimize(optimizer_type, parameters, closure, LR, num_iter):
         print('Starting optimization with ADAM')
         optimizer = torch.optim.Adam(parameters, lr=LR)
         
-        for j in range(num_iter):
+        for j in tqdm(range(num_iter)):
             optimizer.zero_grad()
             closure()
             optimizer.step()
