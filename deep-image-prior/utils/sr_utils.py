@@ -51,7 +51,10 @@ def load_LR_HR_imgs_sr(fname, imsize, factor, enforse_div32=None):
                img_HR_pil.size[1] // factor
     ]
 
-    img_LR_pil = img_HR_pil.resize(LR_size, Image.ANTIALIAS)
+    # img_LR_pil = img_HR_pil.resize(LR_size, Image.ANTIALIAS)
+    # img_LR_pil = img_HR_pil.resize(LR_size, Image.ANTIALIAS)
+    img_LR_pil = img_HR_pil.resize(LR_size, Image.LANCZOS)
+
     img_LR_np = pil_to_np(img_LR_pil)
 
     print('HR and LR resolutions: %s, %s' % (str(img_HR_pil.size), str (img_LR_pil.size)))
