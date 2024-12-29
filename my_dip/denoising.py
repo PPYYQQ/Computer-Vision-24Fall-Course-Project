@@ -14,6 +14,7 @@ from utils import get_image, get_noise, np_to_torch, get_noisy_image, plot_image
 
 dtype = torch.cuda.FloatTensor
 
+# Noise para
 sigma = 25
 sigma_ = sigma/255.
 
@@ -26,20 +27,9 @@ fname = 'data/denoising/F16_GT.png'
 img_pil, img_np = get_image(fname)
 
 if fname == 'data/denoising/snail.jpg':
-    img_noisy_pil, img_noisy_np  = img_pil, img_np 
-        
-elif fname == 'data/denoising/F16_GT.png':
-    # Add synthetic noise
-    img_noisy_pil, img_noisy_np = get_noisy_image(img_np, sigma_)
-    
-else:
-    assert False
-
-# Get the model
-if fname == 'data/denoising/snail.jpg':
+    img_noisy_pil, img_noisy_np  = img_pil, img_np    
     num_iter = 2400
     input_depth = 3
-
     net = skip(
                 input_depth, 3, 
                 num_channels_down = [8, 16, 32, 64, 128], 
@@ -48,8 +38,9 @@ if fname == 'data/denoising/snail.jpg':
                 upsample_mode='bilinear', downsample_mode='stride',
                 need_sigmoid=True, need_bias=True, pad='reflection', act_fun='LeakyReLU')
 
-
 elif fname == 'data/denoising/F16_GT.png':
+    # Add synthetic noise
+    img_noisy_pil, img_noisy_np = get_noisy_image(img_np, sigma_)
     num_iter = 3000
     input_depth = 32 
 
@@ -60,20 +51,17 @@ elif fname == 'data/denoising/F16_GT.png':
                 num_channels_skip = [128]*5, 
                 upsample_mode='bilinear', downsample_mode='stride',
                 need_sigmoid=True, need_bias=True, pad='reflection', act_fun='LeakyReLU')
-else:
-    assert False
     
 net_input = get_noise(input_depth, 'noise', (img_pil.size[1], img_pil.size[0])).type(dtype).detach()
+img_noisy_torch = np_to_torch(img_noisy_np).type(dtype)
 
 # Compute number of parameters
 s  = sum([np.prod(list(p.size())) for p in net.parameters()]); 
 print ('Number of params: %d' % s)
 
-img_noisy_torch = np_to_torch(img_noisy_np).type(dtype)
-
 # Training
 
-# Parameter
+# Parameters
 device = 'cuda:0'
 reg_noise_std = 1./30. # set to 1./20. for sigma=50
 LR = 0.01
@@ -95,7 +83,7 @@ if not os.path.exists(log_dir):
 log_file_path = os.path.join(log_dir, 'denoise_training_log.txt')
 log_file = open(log_file_path, 'a')
 
-
+# Load everything to GPU
 net = net.type(dtype).to(device)
 net_input_saved = net_input_saved.to(device)
 noise = noise.to(device)

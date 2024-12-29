@@ -15,28 +15,6 @@ import matplotlib.pyplot as plt
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
-
-def generate_gaussian_noise(input_depth, spatial_size, var=1./10):
-    """
-    Generates a Gaussian noise tensor.
-    
-    Parameters:
-    - input_depth: The number of channels in the tensor
-    - spatial_size: The spatial dimensions of the tensor (height, width)
-    - var: The variance factor of the noise
-    
-    Returns:
-    - A PyTorch tensor filled with Gaussian noise
-    """
-
-    if isinstance(spatial_size, int):
-        spatial_size = (spatial_size, spatial_size)
-    
-    shape = (1, input_depth, spatial_size[0], spatial_size[1])
-    noise = torch.randn(shape) * var
-    
-    return noise
-
 def pil_to_np(img_PIL):
     '''Converts image in PIL format to np.array.
     
