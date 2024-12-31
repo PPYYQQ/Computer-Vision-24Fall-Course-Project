@@ -97,7 +97,6 @@ optimizer = optim.Adam(net.parameters(), lr=LR)
 criterion = nn.MSELoss()
 
 for i in range(num_iter):
-
     optimizer.zero_grad()
     if reg_noise_std > 0:
         net_input = net_input_saved + (noise.normal_() * reg_noise_std)
