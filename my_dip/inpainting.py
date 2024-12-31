@@ -8,7 +8,7 @@ from skip import skip
 import torch
 import torch.optim as optim
 import torch.nn as nn
-from utils import get_image, get_noise, np_to_torch, get_noisy_image, plot_image, pil_to_np
+from utils import get_image, get_noise, np_to_torch, get_noisy_image, plot_image, pil_to_np, crop_image
 
 
 dtype = torch.cuda.FloatTensor
@@ -19,16 +19,16 @@ dtype = torch.cuda.FloatTensor
 
 
 ## Fig 6
-# img_path  = 'data/inpainting/vase.png'
-# mask_path = 'data/inpainting/vase_mask.png'
+img_path  = 'data/inpainting/vase.png'
+mask_path = 'data/inpainting/vase_mask.png'
 
 ## Fig 8
 # img_path  = 'data/inpainting/library.png'
 # mask_path = 'data/inpainting/library_mask.png'
 
 ## Fig 7 (top)
-img_path  = 'data/inpainting/kate.png'
-mask_path = 'data/inpainting/kate_mask.png'
+# img_path  = 'data/inpainting/kate.png'
+# mask_path = 'data/inpainting/kate_mask.png'
 
 # Another text inpainting example
 # img_path  = 'data/inpainting/peppers.png'
@@ -36,9 +36,12 @@ mask_path = 'data/inpainting/kate_mask.png'
 
 NET_TYPE = 'skip_depth6' # one of skip_depth4|skip_depth2|UNET|ResNet
 
+image_name = img_path.split('/')[-1].split('.')[0]
+task_name = 'inpaint'
 
-img_pil, img_np = get_image(img_path)
-img_mask_pil, img_mask_np = get_image(mask_path)
+img_pil = crop_image(get_image(img_path)[0], d=64)
+img_mask_pil = crop_image(get_image(mask_path)[0], d=64)
+
 img_np      = pil_to_np(img_pil)
 img_mask_np = pil_to_np(img_mask_pil)
 
@@ -126,7 +129,7 @@ noise = net_input.detach().clone()
 log_dir = 'logs'
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
-log_file_path = os.path.join(log_dir, 'inpaint_training_log.txt')
+log_file_path = os.path.join(log_dir, f'{task_name}_{image_name}_log.txt')
 log_file = open(log_file_path, 'a')
 
 # Load everything to GPU
@@ -160,4 +163,8 @@ for i in range(num_iter):
     optimizer.step()
 
     if i % save_iter==0:
-        plot_image(out.detach().cpu(), f'./outputs/inpaint/{i:04d}.jpg')
+        try: 
+            os.mkdir(f'./outputs/{task_name}/{image_name}')
+        except:
+            pass
+        plot_image(out.detach().cpu(), f'./outputs/{task_name}/{image_name}/{i:04d}.jpg')

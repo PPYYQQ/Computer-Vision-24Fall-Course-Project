@@ -217,3 +217,20 @@ def put_in_center(img_np, target_size):
     img_out[:, bbox[0]:bbox[2], bbox[1]:bbox[3]] = img_np
     
     return img_out
+
+
+def crop_image(img, d=32):
+    '''Make dimensions divisible by `d`'''
+
+    new_size = (img.size[0] - img.size[0] % d, 
+                img.size[1] - img.size[1] % d)
+
+    bbox = [
+            int((img.size[0] - new_size[0])/2), 
+            int((img.size[1] - new_size[1])/2),
+            int((img.size[0] + new_size[0])/2),
+            int((img.size[1] + new_size[1])/2),
+    ]
+
+    img_cropped = img.crop(bbox)
+    return img_cropped

@@ -10,7 +10,7 @@ from skimage.metrics import peak_signal_noise_ratio as compare_psnr
 from skip import skip
 from tqdm import tqdm
 
-from utils import get_image, get_noise, np_to_torch, get_noisy_image, plot_image
+from utils import get_image, get_noise, np_to_torch, get_noisy_image, plot_image, crop_image, pil_to_np
 
 dtype = torch.cuda.FloatTensor
 
@@ -19,25 +19,30 @@ sigma = 25
 sigma_ = sigma/255.
 
 # deJPEG 
-# fname = 'data/denoising/snail.jpg'
+fname = 'data/denoising/snail.jpg'
 
 ## denoising
 fname = 'data/denoising/F16_GT.png'
 
-img_pil, img_np = get_image(fname)
+image_name = fname.split('/')[-1].split('.')[0]
+task_name = 'denoise'
+device = 'cuda:0'
+
+img_pil = crop_image(get_image(fname)[0], d=32)
+img_np = pil_to_np(img_pil)
+
 
 if fname == 'data/denoising/snail.jpg':
     img_noisy_pil, img_noisy_np  = img_pil, img_np    
     num_iter = 2400
     input_depth = 3
     net = skip(
-                input_depth, 3, 
+                input_depth, num_output_channels = 3, 
                 num_channels_down = [8, 16, 32, 64, 128], 
                 num_channels_up   = [8, 16, 32, 64, 128],
                 num_channels_skip = [0, 0, 0, 4, 4], 
                 upsample_mode='bilinear', downsample_mode='stride',
                 need_sigmoid=True, need_bias=True, pad='reflection', act_fun='LeakyReLU')
-
 elif fname == 'data/denoising/F16_GT.png':
     # Add synthetic noise
     img_noisy_pil, img_noisy_np = get_noisy_image(img_np, sigma_)
@@ -52,6 +57,7 @@ elif fname == 'data/denoising/F16_GT.png':
                 upsample_mode='bilinear', downsample_mode='stride',
                 need_sigmoid=True, need_bias=True, pad='reflection', act_fun='LeakyReLU')
     
+
 net_input = get_noise(input_depth, 'noise', (img_pil.size[1], img_pil.size[0])).type(dtype).detach()
 img_noisy_torch = np_to_torch(img_noisy_np).type(dtype)
 
@@ -62,7 +68,6 @@ print ('Number of params: %d' % s)
 # Training
 
 # Parameters
-device = 'cuda:0'
 reg_noise_std = 1./30. # set to 1./20. for sigma=50
 LR = 0.01
 
@@ -80,7 +85,7 @@ save_iter = 100
 log_dir = 'logs'
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
-log_file_path = os.path.join(log_dir, 'denoise_training_log.txt')
+log_file_path = os.path.join(log_dir, f'{task_name}_{image_name}_log.txt')
 log_file = open(log_file_path, 'a')
 
 # Load everything to GPU
@@ -120,7 +125,11 @@ for i in range(num_iter):
     log_file.write(log_message)
 
     if i % save_iter==0:
-        plot_image(out.detach().cpu(), f'./outputs/denoise/{i:04d}.jpg')
+        try: 
+            os.mkdir(f'./outputs/{task_name}/{image_name}')
+        except:
+            pass
+        plot_image(out.detach().cpu(), f'./outputs/{task_name}/{image_name}/{i:04d}.jpg')
 
     # Backtracking
     if i % show_every:
