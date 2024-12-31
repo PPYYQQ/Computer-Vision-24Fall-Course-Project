@@ -22,11 +22,11 @@ sigma_ = sigma/255.
 fname = 'data/denoising/snail.jpg'
 
 ## denoising
-fname = 'data/denoising/F16_GT.png'
+# fname = 'data/denoising/F16_GT.png'
 
 image_name = fname.split('/')[-1].split('.')[0]
 task_name = 'denoise'
-device = 'cuda:0'
+device = 'cuda:2'
 
 img_pil = crop_image(get_image(fname)[0], d=32)
 img_np = pil_to_np(img_pil)
@@ -59,7 +59,7 @@ elif fname == 'data/denoising/F16_GT.png':
     
 
 net_input = get_noise(input_depth, 'noise', (img_pil.size[1], img_pil.size[0])).type(dtype).detach()
-img_noisy_torch = np_to_torch(img_noisy_np).type(dtype)
+img_noisy_torch = np_to_torch(img_noisy_np).type(dtype).to(device)
 
 # Compute number of parameters
 s  = sum([np.prod(list(p.size())) for p in net.parameters()]); 
