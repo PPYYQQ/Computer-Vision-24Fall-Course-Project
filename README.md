@@ -14,14 +14,14 @@ This repostory contains the replication of the 2018 CVPR paper: "Deep Image Prio
 - scikit-image
 
 2. Clone this repository and access our work in the ```my_dip``` folder.
-```python
-https://github.com/PPYYQQ/Computer-Vision-24Fall-Course-Project.git
+```
+git clone https://github.com/PPYYQQ/Computer-Vision-24Fall-Course-Project.git
 cd Computer-Vision-24Fall-Course-Project
 cd my_dip
 ```
 
 3. Run the python files for tasks denoising, inpainting, and super-resolution respectively.
-```python
+```
 python denoising.py
 python inpainting.py
 python super_resolution.py
