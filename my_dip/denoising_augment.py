@@ -1,3 +1,4 @@
+from skimage.restoration import denoise_nl_means, estimate_sigma
 import matplotlib.pyplot as plt
 import os
 import numpy as np
@@ -14,6 +15,13 @@ from utils import get_image, get_noise, np_to_torch, get_noisy_image, plot_image
 
 dtype = torch.cuda.FloatTensor
 
+def tv_loss(image):
+    """Compute the Total Variation loss for an image."""
+    # Shift one pixel and get the difference from the original image
+    diff_i = torch.sum(torch.abs(image[:, :, 1:, :] - image[:, :, :-1, :]))
+    diff_j = torch.sum(torch.abs(image[:, :, :, 1:] - image[:, :, :, :-1]))
+    return diff_i + diff_j
+
 # Noise para
 sigma = 25
 sigma_ = sigma/255.
@@ -24,7 +32,7 @@ fname = 'data/denoising/snail.jpg'
 ## denoising
 # fname = 'data/denoising/F16_GT.png'
 img_list = [
-    # './data/denoising/ISO/DSC_8880.JPG',
+    './data/denoising/ISO/DSC_8880.JPG',
     # './data/denoising/ISO/DSC_8881.JPG',
     # './data/denoising/ISO/DSC_8882.JPG',
     # './data/denoising/ISO/DSC_8883.JPG',
@@ -35,7 +43,10 @@ img_list = [
     # './data/denoising/ISO/DSC_8888.JPG',
     # './data/denoising/ISO/DSC_8889.JPG',
     # './data/denoising/herbitcrap.png',
-    'data/denoising/snail.jpg'
+    # "/home/yongqian/CV/CV-24Fall-Course-Project/my_dip/data/denoising/F16_GT.png"
+    # 'data/denoising/snail.jpg'
+
+
 
 ]
 
@@ -52,8 +63,7 @@ for idx in range(len(img_list)):
 
     if fname == 'data/denoising/snail.jpg':
         img_noisy_pil, img_noisy_np  = img_pil, img_np    
-        # num_iter = 3000
-        num_iter = 300
+        num_iter = 3000
         input_depth = 3
         net = skip(
                     input_depth, num_output_channels = 3, 
@@ -63,7 +73,7 @@ for idx in range(len(img_list)):
                     upsample_mode='bilinear', downsample_mode='stride',
                     need_sigmoid=True, need_bias=True, pad='reflection', act_fun='LeakyReLU')
         
-    elif fname == 'data/denoising/F16_GT.png':
+    elif 'data/denoising/F16_GT.png' in fname:
         # Add synthetic noise
         img_noisy_pil, img_noisy_np = get_noisy_image(img_np, sigma_)
         num_iter = 3000
@@ -133,7 +143,7 @@ for idx in range(len(img_list)):
     log_dir = 'logs'
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
-    log_file_path = os.path.join(log_dir, f'{task_name}_{image_name}_log.txt')
+    log_file_path = os.path.join(log_dir, f'{task_name}_{image_name}_tv_log.txt')
     log_file = open(log_file_path, 'a')
 
     # Load everything to GPU
@@ -144,6 +154,7 @@ for idx in range(len(img_list)):
     optimizer = optim.Adam(net.parameters(), lr=LR)
     criterion = nn.MSELoss()
 
+    tv_weight = 1e-6
     for i in range(num_iter):
         optimizer.zero_grad()
         if reg_noise_std > 0:
@@ -157,7 +168,17 @@ for idx in range(len(img_list)):
         else:
             out_avg = out_avg * exp_weight + out.detach() * (1 - exp_weight)
                 
-        total_loss = criterion(out, img_noisy_torch)
+        # Compute DIP loss
+        loss_DIP = criterion(out, img_noisy_torch)
+        loss_tv = tv_loss(out)
+        # print(loss_DIP, tv_weight * loss_tv)
+        if i > (num_iter / 3):
+            tv_weight = 0
+        # if i > 2000:
+        #     tv_weight *= 0.1
+        # print(loss_DIP, tv_weight, loss_tv)
+        total_loss = loss_DIP + tv_weight * loss_tv
+        
         total_loss.backward()
             
         optimizer.step()
@@ -173,10 +194,10 @@ for idx in range(len(img_list)):
 
         if i % save_iter==0:
             try: 
-                os.mkdir(f'./outputs/{task_name}/{image_name}')
+                os.mkdir(f'./outputs/{task_name}/{image_name}_tv')
             except:
                 pass
-            plot_image(out.detach().cpu(), f'./outputs/{task_name}/{image_name}/{i:04d}.jpg')
+            plot_image(out.detach().cpu(), f'./outputs/{task_name}/{image_name}_tv/{i:04d}.jpg')
 
         # Backtracking
         if i % show_every:
