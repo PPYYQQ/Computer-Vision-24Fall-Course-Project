@@ -20,9 +20,11 @@ cd Computer-Vision-24Fall-Course-Project
 cd my_dip
 ```
 
-3. Run the python files for tasks denoising, inpainting, and super-resolution respectively.
+3. Run the python files for tasks denoising, inpainting, and super-resolution respectively, and run our innovation work for denoising.
 ```
 python denoising.py
 python inpainting.py
 python super_resolution.py
+
+python denoising_augmented.py
 ```
