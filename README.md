@@ -2,7 +2,7 @@
 
 ## Exploring Deep Image Prior for Image Restoration: A  Comprehensive Study and Extension
 
-This repostory contains the replication of the 2018 CVPR paper: "Deep Image Prior" and our innovation based on the paper. 
+This repository contains the replication of the 2018 CVPR paper: "Deep Image Prior" and our innovation based on the paper. 
 
 ### 1. Installation
 1. list of libraries to be installed: 
