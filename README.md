@@ -26,5 +26,5 @@ python denoising.py
 python inpainting.py
 python super_resolution.py
 
-python denoising_augmented.py
+python denoising_augment.py
 ```
