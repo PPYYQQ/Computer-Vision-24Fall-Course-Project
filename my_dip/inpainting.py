@@ -37,15 +37,20 @@ dtype = torch.cuda.FloatTensor
 NET_TYPE = 'skip_depth6' # one of skip_depth4|skip_depth2|UNET|ResNet
 
 img_list = [
-    'data/inpainting/vase.png',
-    'data/inpainting/library.png',
-    'data/inpainting/kate.png',
+    # 'data/inpainting/vase.png',
+    # 'data/inpainting/library.png',
+    # 'data/inpainting/kate.png',
+    './data/inpainting/DSC_4081.png',
+    # './data/inpainting/wang.png',
 ]
 mask_list = [
-    'data/inpainting/vase_mask.png',
-    'data/inpainting/library_mask.png',
-    'data/inpainting/kate_mask.png',
+    # 'data/inpainting/vase_mask.png',
+    # 'data/inpainting/library_mask.png',
+    # 'data/inpainting/kate_mask.png',
+    './data/inpainting/DSC_4081_mask.png',
+    # './data/inpainting/wang_mask.png',
 ]
+
 device = 'cuda:1'
 
 for img_idx in range(len(img_list)):
@@ -68,7 +73,7 @@ for img_idx in range(len(img_list)):
         LR = 0.01 
         num_iter = 5001
         param_noise = False
-        save_iter = 50
+        save_iter = 1
         reg_noise_std = 0.03
         
         net = skip(input_depth, img_np.shape[0], 
@@ -117,6 +122,46 @@ for img_idx in range(len(img_list)):
                 need_sigmoid=True, need_bias=True, pad='reflection', act_fun='LeakyReLU').type(dtype)
         
         LR = 0.01 
+
+    elif 'DSC_4081.png' in img_path:
+        
+        INPUT = 'noise'
+        input_depth = 32
+        
+        num_iter = 6001
+        save_iter = 50
+        reg_noise_std = 0.00
+        param_noise = True
+        
+        depth = int(NET_TYPE[-1])
+        net = skip(input_depth, img_np.shape[0], 
+                num_channels_down = [16, 32, 64, 128, 128, 128][:depth],
+                num_channels_up =   [16, 32, 64, 128, 128, 128][:depth],
+                num_channels_skip = [0,  0,  0,  0,   0,   0][:depth],  
+                filter_size_up = 3,filter_size_down = 5,  filter_skip_size=1,
+                upsample_mode='nearest',
+                need1x1_up=False,
+                need_sigmoid=True, need_bias=True, pad='reflection', act_fun='LeakyReLU').type(dtype)
+        
+        LR = 0.01 
+
+    elif 'wang.png' in img_path:
+        
+        INPUT = 'noise'
+        input_depth = 32
+        LR = 0.01 
+        num_iter = 6001
+        param_noise = False
+        save_iter = 50
+        reg_noise_std = 0.03
+        
+        net = skip(input_depth, img_np.shape[0], 
+                num_channels_down = [128] * 5,
+                num_channels_up =   [128] * 5,
+                num_channels_skip = [128] * 5,  
+                filter_size_up = 3, filter_size_down = 3, 
+                upsample_mode='nearest', filter_skip_size=1,
+                need_sigmoid=True, need_bias=True, pad='reflection', act_fun='LeakyReLU').type(dtype)
             
     else:
         assert False
@@ -183,3 +228,4 @@ for img_idx in range(len(img_list)):
             except:
                 pass
             plot_image(out.detach().cpu(), f'./outputs/{task_name}/{image_name}/{i:04d}.jpg')
+
